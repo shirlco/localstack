@@ -14,7 +14,7 @@ from localstack.utils.strings import short_uid
 BASE_PATH = os.path.join(os.path.dirname(__file__), "../../../target/metric_reports")
 FNAME_RAW_DATA_CSV = os.path.join(
     BASE_PATH,
-    f"metric-report-raw-data-{datetime.utcnow().strftime('%Y-%m-%d_%H:%M:%S')}-{short_uid()}.csv",
+    f"metric-report-raw-data-{datetime.utcnow().strftime('%Y-%m-%d__%H_%M_%S')}-{short_uid()}.csv",
 )
 
 
