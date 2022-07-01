@@ -444,7 +444,7 @@ def _run_localstack_container_command(cmd: List[str]):
     from localstack.utils import docker_utils
 
     container_id = docker_utils.DOCKER_CLIENT.create_container(
-        image_name=constants.DOCKER_IMAGE_NAME_FULL,
+        image_name=constants.DOCKER_IMAGE_NAME,
         entrypoint="",
         remove=True,
         command=cmd,
