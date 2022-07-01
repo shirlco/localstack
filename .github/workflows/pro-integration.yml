@@ -224,7 +224,7 @@ jobs:
       - name: Create Metric Reports
         run: |
           source .venv/bin/activate
-          python etc/metric_aggregator.py ../localstack/target/metric_reports
+          python ../localstack/etc/metric_aggregator.py ../localstack/target/metric_reports
       - name: Archive metric-collection results
         uses: actions/upload-artifact@v3
         with:
