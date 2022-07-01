@@ -433,6 +433,32 @@ def extensions():
     pass
 
 
+def _run_localstack_container_command(cmd: List[str]):
+    """
+    Convenience function to run a command inside a fresh localstack container and print its output.
+
+    :param cmd: the command to run inside the localstack container.
+    :return:
+    """
+    from localstack import config, constants
+    from localstack.utils import docker_utils
+
+    container_id = docker_utils.DOCKER_CLIENT.create_container(
+        image_name=constants.DOCKER_IMAGE_NAME_FULL,
+        entrypoint="",
+        remove=True,
+        command=cmd,
+        mount_volumes=[
+            (config.VOLUME_DIR, constants.DEFAULT_VOLUME_DIR),
+        ],
+    )
+    docker_utils.DOCKER_CLIENT.start_container(container_id)
+    stream = docker_utils.DOCKER_CLIENT.stream_container_logs(container_id)
+
+    for line in stream:
+        print(line.decode("utf-8"), end="")
+
+
 @extensions.command("init")
 @publish_invocation
 def cmd_extensions_init():
@@ -442,27 +468,7 @@ def cmd_extensions_init():
     The environment variable `LOCALSTACK_VOLUME_DIR` currently defaults to /tmp/localstack, where the extension
     environment will be installed into ./lib/extensions/
     """
-    from localstack import config, constants
-    from localstack.utils import docker_utils
-    from localstack.utils.container_utils.container_client import ContainerException
-
-    try:
-        stdout, stderr = docker_utils.DOCKER_CLIENT.run_container(
-            image_name=constants.DOCKER_IMAGE_NAME,
-            entrypoint="",
-            command=[".venv/bin/python", "-m", "localstack.extensions", "init"],
-            mount_volumes=[
-                (config.VOLUME_DIR, constants.DEFAULT_VOLUME_DIR),
-            ],
-        )
-    except ContainerException as e:
-        stdout = e.stdout
-        stderr = e.stderr
-
-    if stdout:
-        click.echo(stdout)
-    if stderr:
-        click.echo(stderr)
+    _run_localstack_container_command([".venv/bin/python", "-m", "localstack.extensions", "init"])
 
 
 @extensions.command("install")
@@ -478,10 +484,8 @@ def cmd_extensions_install(name: str):
 
         localstack extensions install "git+https://github.com/localstack/localstack-stripe.git#egg=localstack-stripe"
     """
-    from localstack import config, constants
+    from localstack import config
     from localstack.extensions import repository
-    from localstack.utils import docker_utils
-    from localstack.utils.container_utils.container_client import ContainerException
 
     if not repository.get_extensions_venv().exists:
         raise ClickException(
@@ -492,35 +496,15 @@ def cmd_extensions_install(name: str):
     python_bin = os.path.join(
         config.Directories.for_container().var_libs, repository.VENV_DIRECTORY, "bin/python"
     )
-
-    try:
-        stdout, stderr = docker_utils.DOCKER_CLIENT.run_container(
-            image_name=constants.DOCKER_IMAGE_NAME,
-            entrypoint="",
-            remove=True,
-            command=[python_bin, "-m", "pip", "install", name],
-            mount_volumes=[
-                (config.VOLUME_DIR, constants.DEFAULT_VOLUME_DIR),
-            ],
-        )
-    except ContainerException as e:
-        stdout = e.stdout
-        stderr = e.stderr
-
-    if stdout:
-        click.echo(stdout)
-    if stderr:
-        click.echo(stderr)
+    _run_localstack_container_command([python_bin, "-m", "pip", "install", name])
 
 
 @extensions.command("uninstall", help="Remove a LocalStack extension")
 @click.argument("name", required=True)
 @publish_invocation
 def cmd_extensions_uninstall(name: str):
-    from localstack import config, constants
+    from localstack import config
     from localstack.extensions import repository
-    from localstack.utils import docker_utils
-    from localstack.utils.container_utils.container_client import ContainerException
 
     if not repository.get_extensions_venv().exists:
         raise ClickException(
@@ -531,25 +515,9 @@ def cmd_extensions_uninstall(name: str):
     python_bin = os.path.join(
         config.Directories.for_container().var_libs, repository.VENV_DIRECTORY, "bin/python"
     )
-
-    try:
-        stdout, stderr = docker_utils.DOCKER_CLIENT.run_container(
-            image_name=constants.DOCKER_IMAGE_NAME,
-            entrypoint="",
-            remove=True,
-            command=[python_bin, "-m", "pip", "uninstall", "-y", name],
-            mount_volumes=[
-                (config.VOLUME_DIR, constants.DEFAULT_VOLUME_DIR),
-            ],
-        )
-    except ContainerException as e:
-        stdout = e.stdout
-        stderr = e.stderr
-
-    if stdout:
-        click.echo(stdout)
-    if stderr:
-        click.echo(stderr)
+    _run_localstack_container_command(
+        [python_bin, "-m", "pip", "uninstall", "-y", name],
+    )
 
 
 class DockerStatus(TypedDict, total=False):
