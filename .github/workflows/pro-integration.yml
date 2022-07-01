@@ -229,4 +229,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: metric-collection-report
-          path: ../localstack/target/metric_reports/*
+          path: ${{ github.workspace }}/localstack/target/metric_reports/
