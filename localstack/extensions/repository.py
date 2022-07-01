@@ -11,11 +11,21 @@ LOCALSTACK_VENV = VirtualEnvironment(os.path.join(constants.LOCALSTACK_ROOT_FOLD
 VENV_DIRECTORY = "extensions/python_venv"
 
 
-def get_extensions_venv():
+def get_extensions_venv() -> VirtualEnvironment:
+    """
+    Returns a VirtualEnvironment object point to ``<var_libs>/extensions/python_venv``, either on the host or in the
+    container.
+
+    :return: the virtual environment
+    """
     return VirtualEnvironment(os.path.join(config.dirs.var_libs, VENV_DIRECTORY))
 
 
 def init():
+    """
+    Idempotent operation to ensure the extensions virtual environment is created, and the localstack venv is linked
+    into it via a .pth file.
+    """
     venv = get_extensions_venv()
 
     if not venv.exists:

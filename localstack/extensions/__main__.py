@@ -17,6 +17,9 @@ def cli():
 
 @cli.command("debug")
 def debug():
+    """
+    Print debug information about localstack directories and run ``pip list`` in the extensions venv.
+    """
     click.echo("Directories")
     click.echo("===========")
     for k, v in config.dirs.__dict__.items():
@@ -40,6 +43,9 @@ def debug():
 
 @cli.command("init")
 def init():
+    """
+    Initialize the extensions repository.
+    """
     from . import repository
 
     repository.init()
